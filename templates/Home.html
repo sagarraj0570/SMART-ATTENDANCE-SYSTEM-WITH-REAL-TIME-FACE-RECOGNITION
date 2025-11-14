@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Smart Attendance System</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+      body {
+        font-family: Poppins, sans-serif;
+        background: linear-gradient(120deg, #0f172a, #1e293b);
+        color: white;
+        min-height: 100vh;
+        padding-bottom: 80px;
+      }
+      .container-box {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 16px;
+        padding: 25px;
+        backdrop-filter: blur(10px);
+      }
+      h2.title {
+        font-weight: 600;
+        margin-bottom: 15px;
+      }
+      .btn-main {
+        background: #06b6d4;
+        border: none;
+        font-weight: 600;
+      }
+      .btn-main:hover {
+        background: #0891b2;
+      }
+      .table-container {
+        max-height: 350px;
+        overflow-y: auto;
+        border-radius: 12px;
+      }
+      .floating-btn {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #ef4444;
+        border: none;
+        font-weight: 600;
+      }
+      .input-box {
+        background: rgba(255, 255, 255, 0.15);
+        border: none;
+        color: white;
+      }
+      .input-box::placeholder {
+        color: #cbd5e1;
+      }
+      label {
+        font-size: 14px;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container mt-4">
+      <h2 class="text-center fw-bold mb-4">
+        🎯 Smart Facial Attendance System
+      </h2>
+      <h6 class="text-center mb-4 text-info">{{ datetoday2 }}</h6>
+
+      <div class="row g-4">
+        <!-- Attendance Section -->
+        <div class="col-md-7">
+          <div class="container-box">
+            <h4 class="title">Today's Attendance ✅</h4>
+
+            <button
+              onclick="getLocationAndStart()"
+              class="btn btn-main w-100 mb-3"
+            >
+              📸 Start Attendance
+            </button>
+            <a href="/dashboard" class="btn btn-warning w-100 mb-3 fw-bold"
+              >📊 View Dashboard</a
+            >
+            <a
+              href="/reset_today"
+              class="btn btn-danger w-100 mb-3 fw-bold"
+              onclick="return confirm('Reset today\'s attendance?')"
+              >♻ Reset Today</a
+            >
+
+            <div class="table-container mt-2">
+              <table class="table table-dark table-striped">
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Roll</th>
+                  <th>Time</th>
+                </tr>
+                {% for i in range(l) %}
+                <tr>
+                  <td>{{i+1}}</td>
+                  <td>{{names[i]}}</td>
+                  <td>{{rolls[i]}}</td>
+                  <td>{{times[i]}}</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add User -->
+        <div class="col-md-5">
+          <div class="container-box">
+            <h4 class="title">➕ Register New User</h4>
+
+            <form action="/add" method="POST">
+              <label>Full Name</label>
+              <input
+                class="form-control input-box"
+                name="newusername"
+                placeholder="e.g., John"
+                required
+              />
+
+              <label>Roll Number</label>
+              <input
+                class="form-control input-box"
+                name="newuserid"
+                placeholder="e.g., 101"
+                required
+              />
+
+              <p class="text-warning small mt-2">
+                Press SPACE to capture & Q to finish.
+              </p>
+
+              <button class="btn btn-main w-100 mt-2">➕ Add User</button>
+            </form>
+
+            <h6 class="mt-3">👥 Total Registered: <b>{{ totalreg }}</b></h6>
+            <a href="/listusers" class="btn btn-secondary w-100 mt-2 fw-bold"
+              >🧾 Manage Users</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating Logout -->
+    <a href="/logout" class="btn btn-danger floating-btn">🚪 Logout</a>
+
+    <script>
+      // ✅ GPS + Start
+      function getLocationAndStart(){
+          if(!navigator.geolocation){
+              alert("Enable GPS!"); return;
+          }
+          navigator.geolocation.getCurrentPosition(pos=>{
+              fetch("/verify_location",{
+                  method:"POST",
+                  headers:{ "Content-Type":"application/json" },
+                  body:JSON.stringify({latitude:pos.coords.latitude,longitude:pos.coords.longitude})
+              })
+              .then(r=>r.text()).then(res=>{
+                  if(res==="ALLOW") window.location="/start";
+                  else Swal.fire("❌ Outside Campus Area","Move inside geofenced zone","error");
+              });
+          },()=>Swal.fire("⚠️ GPS Required","Enable GPS & try again","warning"));
+      }
+
+      // ✅ Sweetalerts
+      {% if success %}
+      Swal.fire({title:"Success", text:"{{success}}", icon:"success"});
+      {% endif %}
+      {% if mess %}
+      Swal.fire({title:"Info", text:"{{mess}}", icon:"info"});
+      {% endif %}
+    </script>
+  </body>
+</html>
